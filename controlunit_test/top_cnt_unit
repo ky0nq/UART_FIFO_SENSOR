@@ -1,5 +1,5 @@
-// 26.04.30 12:57 PM
-// stopwatch에 대해서 sw1 제어를 받음
+// 2026.04.30 05:56 PM 
+// 최종 control unit top module
 
 `timescale 1ns / 1ps
 
@@ -28,7 +28,7 @@ module top_cnt(
     );
 
     // stopwatch run -> return state = run (not stop state) -> previous state
-    reg [2:0] c_state, n_state, previous_state;
+    reg [2:0] c_state, n_state, prev_state;
     reg mode_reg, mode_next; 
     assign o_st_mode = mode_reg;
 
@@ -39,17 +39,24 @@ module top_cnt(
         if (rst) begin
             c_state <= STOP;
             mode_reg <= 1'b0;
+            prev_state <= STOP;
         end
         else begin
             c_state <= n_state;
             mode_reg <= mode_next;
+            if ((c_state == RUN) && (n_state == WATCH)) begin
+                prev_state <= RUN;
+            end
+            else if ((c_state == WATCH || c_state == HOUR || c_state == MIN || c_state == SEC) &&
+                     (n_state == RUN || n_state == STOP)) begin
+                prev_state <= STOP;
+            end
         end
     end
 
     always @(*) begin
         n_state = c_state;
         mode_next = mode_reg;
-        o_st_runstop = (previous_state == RUN) ? 1'b1 : 1'b0;
         o_st_clear = 1'b0;  
         o_st_set   = 1'b0;
         case (c_state) 
@@ -80,7 +87,6 @@ module top_cnt(
                 end 
                 else if (sw1) begin
                     n_state = WATCH;
-                    previous_state = RUN;
                 end
             end
             CLEAR: begin 
@@ -92,10 +98,10 @@ module top_cnt(
                 n_state = STOP;
             end
             WATCH : begin
+                o_st_runstop = (prev_state == RUN) ? 1'b1 : 1'b0; 
                 if (!sw1) begin
-                    if (previous_state == RUN) begin
+                    if (prev_state == RUN) begin
                         n_state = RUN;
-                        previous_state = STOP;
                     end
                     else begin
                         n_state = STOP;
@@ -112,13 +118,13 @@ module top_cnt(
                 end
             end
             HOUR: begin
+                o_st_runstop = (prev_state == RUN) ? 1'b1 : 1'b0; 
                 if (!sw2) begin
                     n_state = WATCH;
                 end
                 else if (!sw1) begin
-                    if (previous_state == RUN) begin
+                    if (prev_state == RUN) begin
                         n_state = RUN;
-                        previous_state = STOP;
                     end
                     else begin
                         n_state = STOP;
@@ -134,14 +140,14 @@ module top_cnt(
                     n_state = HOUR;
                 end
             end
-            MIN: begin  
+            MIN: begin
+                o_st_runstop = (prev_state == RUN) ? 1'b1 : 1'b0;   
                 if (!sw2) begin
                     n_state = WATCH;
                 end
                 else if (!sw1) begin
-                    if (previous_state == RUN) begin
+                    if (prev_state == RUN) begin
                         n_state = RUN;
-                        previous_state = STOP;
                     end
                     else begin
                         n_state = STOP;
@@ -158,13 +164,13 @@ module top_cnt(
                 end
             end
             SEC: begin
+                o_st_runstop = (prev_state == RUN) ? 1'b1 : 1'b0; 
                 if (!sw2) begin
                     n_state = WATCH;
                 end
                 else if (!sw1) begin
-                    if (previous_state == RUN) begin
+                    if (prev_state == RUN) begin
                         n_state = RUN;
-                        previous_state = STOP;
                     end
                     else begin
                         n_state = STOP;
@@ -191,8 +197,5 @@ module top_cnt(
     end
 
 endmodule
-
-
-
 
 
