@@ -1,0 +1,212 @@
+// 26.04.30 09:06 AM
+// stopwatch의 run , stop이 sw1에 제어받아서 o_st_runstop에 대한 유지가 필요
+
+`timescale 1ns / 1ps
+
+module top_cnt(
+    input           clk,
+    input           rst,
+
+    input           sw0,
+    input           sw1,
+    input           sw2,
+
+    input           btnL,
+    input           btnR,
+    input           btnD,
+    input           btnU,
+
+
+    // stopwatch output
+    output reg       o_st_runstop,
+    output reg       o_st_clear,
+    output           o_st_mode,
+    output reg       o_st_set,
+
+    // watch output
+    output reg [2:0] o_wt_place
+    );
+
+    // stopwatch run -> return state = run (not stop state) -> previous state
+    reg [2:0] c_state, n_state, previous_state;
+    reg mode_reg, mode_next; 
+    assign o_st_mode = mode_reg;
+
+    parameter STOP = 3'b000, RUN = 3'b001, CLEAR = 3'b010, MODE = 3'b011, // stopwatch state
+            WATCH = 3'b100, HOUR = 3'b101, MIN = 3'b110, SEC = 3'b111;    // watch state
+    
+    always @(posedge clk, posedge rst) begin
+        if (rst) begin
+            c_state <= STOP;
+            previous_state <= STOP;
+            mode_reg <= 1'b0;
+        end
+        else begin
+            c_state <= n_state;
+            mode_reg <= mode_next;
+        end
+    end
+
+    always @(*) begin
+        n_state = c_state;
+        mode_next = mode_reg;
+        //o_st_runstop = 1'b0;
+        o_st_clear = 1'b0;  
+        o_st_set   = 1'b0;
+        case (c_state) 
+            STOP: begin
+                o_st_runstop = 1'b0; 
+                o_st_clear = 1'b0; 
+                if (sw1) begin
+                    n_state = WATCH;
+                end  
+                else if (btnR) begin
+                    n_state = RUN;
+                end
+                else if (btnL) begin 
+                    n_state = CLEAR;
+                end
+                else if (btnD) begin
+                    n_state = MODE;
+                end
+                else if (btnU) begin
+                    n_state = STOP;
+                    o_st_set = 1'b1;
+                end
+            end
+            RUN: begin
+                o_st_runstop = 1'b1; 
+                if (btnR) begin 
+                    n_state = STOP;
+                end 
+                else if (sw1) begin
+                    n_state = WATCH;
+                    previous_state = RUN;
+                end
+            end
+            CLEAR: begin 
+                o_st_clear = 1'b1; 
+                n_state = STOP;
+            end
+            MODE: begin 
+                mode_next = ~mode_reg;
+                n_state = STOP;
+            end
+            WATCH : begin
+                //if (previous_state == RUN) begin
+                //    o_st_runstop = 1'b1;
+                //end
+
+                if (!sw1) begin
+                    if (previous_state == RUN) begin
+                        n_state = RUN;
+                        previous_state = STOP;
+                    end
+                    else begin
+                        n_state = STOP;
+                    end
+                end
+                else if (sw0 && sw2) begin
+                    n_state = HOUR;
+                end
+                else if (sw2 && !sw0) begin
+                    n_state = SEC;
+                end
+                else begin
+                    n_state = WATCH;
+                end
+            end
+            HOUR: begin
+                //if (previous_state == RUN) begin
+                //    o_st_runstop = 1'b1;
+                //end
+
+                if (!sw2) begin
+                    n_state = WATCH;
+                end
+                else if (!sw1) begin
+                    if (previous_state == RUN) begin
+                        n_state = RUN;
+                        previous_state = STOP;
+                    end
+                    else begin
+                        n_state = STOP;
+                    end
+                end
+                else if (!sw0) begin
+                    n_state = SEC;
+                end
+                else if (btnL | btnR) begin
+                    n_state = MIN;
+                end
+                else begin
+                    n_state = HOUR;
+                end
+            end
+            MIN: begin  
+                //if (previous_state == RUN) begin
+                //    o_st_runstop = 1'b1;
+                //end
+
+                if (!sw2) begin
+                    n_state = WATCH;
+                end
+                else if (!sw1) begin
+                    if (previous_state == RUN) begin
+                        n_state = RUN;
+                        previous_state = STOP;
+                    end
+                    else begin
+                        n_state = STOP;
+                    end
+                end
+                else if (!sw0) begin
+                    n_state = SEC;
+                end
+                else if (btnL | btnR) begin
+                    n_state = HOUR;
+                end
+                else begin 
+                    n_state = MIN;
+                end
+            end
+            SEC: begin
+                //if (previous_state == RUN) begin
+                //    o_st_runstop = 1'b1;
+                //end
+
+                if (!sw2) begin
+                    n_state = WATCH;
+                end
+                else if (!sw1) begin
+                    if (previous_state == RUN) begin
+                        n_state = RUN;
+                        previous_state = STOP;
+                    end
+                    else begin
+                        n_state = STOP;
+                    end
+                end
+                else if (sw0) begin
+                    n_state = HOUR;
+                end
+                else begin 
+                    n_state = SEC;
+                end
+            end
+        endcase
+    end
+
+    always @(*) begin
+        case (c_state) 
+            WATCH : o_wt_place = 3'b000;
+            HOUR : o_wt_place = 3'b100;
+            MIN  : o_wt_place = 3'b010;
+            SEC  : o_wt_place = 3'b001;
+            default: o_wt_place = 3'b000;
+        endcase
+    end
+
+endmodule
+
+
