@@ -1,0 +1,84 @@
+// dht11.v
+// 26.05.01 16:02 
+
+`timescale 1ns / 1ps
+
+module dht11 (
+    input clk,
+    input rst,
+    input btn_R,
+    input sw3,
+
+    output [3:0] fnd_com,
+    output [7:0] fnd_data,
+    output o_led15,
+
+    inout dht11
+);
+
+    wire w_tick_us, w_dht11_start;
+    wire [7:0] w_temperature, w_humidity, w_data;
+
+    ila_0 U_ILA_0 (
+        .clk(clk),
+        .probe0(w_dht11_start),
+        .probe1(w_humidity),
+        .probe2(w_temperature),
+        .probe3(U_DHT11_CNTL.c_state),
+        .probe4(U_DHT11_CNTL.dht11_sync2),
+        .probe5(U_DHT11_CNTL.bit_cnt_reg),
+        .probe6(U_DHT11_CNTL.data_reg)
+    );
+    button_debounce U_BTN_DEBOUNCE (
+        .clk  (clk),
+        .rst  (rst),
+        .i_Btn(btn_R),
+        .o_Btn(w_dht11_start)
+    );
+
+    tick_gen_us U_TICK_GEN_US (
+        .clk    (clk),
+        .rst    (rst),
+        .tick_us(w_tick_us)
+    );
+
+    dht11_controller U_DHT11_CNTL (
+        .clk        (clk),
+        .rst        (rst),
+        .dht11_start(w_dht11_start),
+        .tick_us    (w_tick_us),
+        .humidity   (w_humidity),
+        .temperature(w_temperature),
+        .o_led15    (o_led15),
+        .dht11      (dht11)
+    );
+
+    mux_2x1 U_MUX2X1 (
+        .in0(w_humidity),
+        .in1(w_temperature),
+        .sel(sw3),
+        .out_mux(w_data)
+    );
+
+    fnd_controller U_FND_CNTL (
+        .clk     (clk),
+        .rst     (rst),
+        .fnd_in  (w_data),
+        .fnd_com (fnd_com),
+        .fnd_data(fnd_data)
+    );
+
+endmodule
+
+module mux_2x1 #(
+    parameter BIT_WIDTH = 8
+) (
+    input  [BIT_WIDTH-1:0] in0,
+    input  [BIT_WIDTH-1:0] in1,
+    input                  sel,
+    output [BIT_WIDTH-1:0] out_mux
+);
+
+    // sel = sw[1]
+    assign out_mux = (sel) ? in1 : in0;
+endmodule
