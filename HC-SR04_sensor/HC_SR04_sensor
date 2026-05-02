@@ -13,12 +13,6 @@ module TOP_sr04_controller (
     wire w_tick_us;
     wire [8:0] w_ditance;
 
-    //보고싶은데서 선언해주면된데 지금은 top을 보려고 여기에 선언
-    ila_0 U_ILA0 (
-        .clk(clk),//여기는 무조건 시스템 클럭만 사용해야해, 우리가 분주하는 클럭 사용 x
-        .probe0(w_sr04_start),
-        .probe1(w_ditance)
-    );
     button_debounce U_BD_SR04_START (
         .clk  (clk),
         .rst  (rst),
