@@ -1,5 +1,5 @@
 // dht11_controller.v
-// 26.05.01 11:42 pm
+// 26.05.02 07:29 pm
 
 `timescale 1ns / 1ps
 
@@ -10,7 +10,7 @@ module dht11_controller (
     input           tick_us,
     output [7:0]    humidity,
     output [7:0]    temperature,
-    output          o_led15,  // for check sum (valid == 1 -> led == 1)
+    output          valid,  // for check sum (valid == 1 -> led == 1)
     inout           dht11
 );
 
@@ -50,7 +50,8 @@ module dht11_controller (
     end
 
     // 8-bit * 4 -> 최대 10bit
-    assign o_led15 = (data_reg [7:0] == (data_reg[39:32] + data_reg[31:24] + data_reg[23:16] + data_reg [15:8])) ? 1 : 0;
+    assign valid = (data_reg [7:0] == (data_reg[39:32] + data_reg[31:24] + data_reg[23:16] + data_reg [15:8])) ? 1 : 0;
+    
     always @(posedge clk, posedge rst) begin
         if (rst) begin
             c_state <= IDLE;
