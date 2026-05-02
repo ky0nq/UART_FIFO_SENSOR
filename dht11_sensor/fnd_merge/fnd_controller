@@ -1,0 +1,59 @@
+`timescale 1ns / 1ps
+
+module fnd_controller (
+    input 		    clk,
+    input 		    rst,
+    input	[23:0] 	fnd_in,
+
+    output 	[3:0] 	fnd_com,
+    output 	[7:0] 	fnd_data
+);
+    wire 	[23:0] 	w_out_mux;
+    wire 	[23:0] 	w_digit_1_hum, w_digit_10_hum, w_digit_1_tem, w_digit_10_tem;
+    wire 	[1:0] 	w_digit_sel;
+    wire 		w_1khz; 
+
+    clk_div_1khz U_CLK_DIV_1KHZ( 
+        .clk		(clk),
+        .rst		(rst),
+        .o_1khz		(w_1khz) 
+    );
+
+    digit_split_10 U_DIGIT_SPLIT_TEM (
+        .digit_in	(fnd_in[15:8]),
+        .digit_1	(w_digit_1_tem),
+        .digit_10	(w_digit_10_tem)
+    );
+
+    digit_split_10 U_DIGIT_SPLIT_HUM (
+        .digit_in	(fnd_in[7:0]),
+        .digit_1	(w_digit_1_hum),
+        .digit_10	(w_digit_10_hum)
+    );
+    
+    mux_4x1 U_MUX_4X1 (
+        .in0		(w_digit_1_hum),
+        .in1		(w_digit_10_hum),
+        .in2		(w_digit_1_tem),
+        .in3		(w_digit_10_tem),
+        .sel		(w_digit_sel),  
+        .out_mux	(w_out_mux)
+    );
+
+    counter_4 U_COUNTER_4(
+        .clk		(w_1khz), 
+        .rst		(rst),
+        .digit_sel	(w_digit_sel)
+    );
+
+    decoder_2x4 U_DECODER_2X4 (
+        .decoder_in	(w_digit_sel),
+        .fnd_com	(fnd_com)
+    );
+
+    bcd U_BCD (
+        .bin		(w_out_mux),
+        .bcd_data	(fnd_data)
+    );
+
+endmodule
