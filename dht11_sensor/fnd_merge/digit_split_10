@@ -1,0 +1,11 @@
+module digit_split_10 (
+    input [7:0] digit_in,
+
+    output [3:0] digit_1,
+    output [3:0] digit_10
+);
+
+    assign digit_1 = digit_in % 10;
+    assign digit_10 = (digit_in / 10) % 10;
+
+endmodule
