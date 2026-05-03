@@ -102,7 +102,7 @@ module tb_semi_top ();
             // DUT START(18ms LOW) + WAIT(30us 후 Hi-Z) 대기
             // DUT가 dht11을 LOW로 당기는 구간 대기
             @(negedge dht11);           // DUT START 시작
-            #18_100_000;                // 18ms 경과 대기 (DUT가 Hi-Z로 전환)
+            #19_100_000;                // 19ms 경과 대기 (DUT가 Hi-Z로 전환)
 
             // tb가 제어권 획득
             dht11_tb_en    = 1;
@@ -202,7 +202,7 @@ module tb_semi_top ();
         join
 
 		repeat (1_000) @(negedge clk);
-
+        repeat (1_000) @(negedge clk);
 		// -----------------------------------------------
 		// IDLE State Transition Test
 		// -----------------------------------------------
