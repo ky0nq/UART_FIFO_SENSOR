@@ -11,8 +11,8 @@ module fnd_controller (
     output 	[3:0] 	fnd_com,
     output 	[7:0] 	fnd_data
 );
-    wire 	[23:0] 	w_out_mux;
-    wire 	[23:0] 	w_digit_1_hum, w_digit_10_hum, w_digit_1_tem, w_digit_10_tem;
+    wire 	[3:0] 	w_out_mux;
+    wire 	[3:0] 	w_digit_1_hum, w_digit_10_hum, w_digit_1_tem, w_digit_10_tem;
     wire 	[1:0] 	w_digit_sel;
     wire 		    w_1khz; 
 
