@@ -14,7 +14,7 @@ module dht11 (
     output [3:0] fnd_com,
     output [7:0] fnd_data,
     output valid,
-    output dht_done,
+    //output dht_done,
 
     inout dht11
 );
@@ -61,7 +61,7 @@ module dht11 (
         .humidity   (w_humidity),
         .temperature(w_temperature),
         .valid      (valid),
-        .dht_done   (dht_done),
+        .dht_done   (/*dht_done*/),
         .dht11      (dht11)
     );
 
