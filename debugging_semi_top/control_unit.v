@@ -1,4 +1,4 @@
-// 26.05.03 20:25
+// 26.05.03 20:37 dh_rev1
 
 `timescale 1ns / 1ps
 
@@ -345,6 +345,9 @@ module control_logic(
 						n_state = IDLE;
 					end
 				end
+				else if (sw[1]) begin
+					n_state = DHT_WAIT;
+				end
 				else if (btnR) begin
 					n_state = SR04_START;
 				end
@@ -361,6 +364,9 @@ module control_logic(
 					else begin
 						n_state = IDLE;
 					end
+				end
+				else if (sw[1]) begin
+					n_state = DHT_WAIT;
 				end
 				else begin
 					if (tick_us == 1) begin
@@ -384,6 +390,9 @@ module control_logic(
 						n_state = IDLE;
 					end
 				end
+				else if (~sw[1]) begin
+					n_state = SR04_WAIT;
+				end
 				else if (btnR) begin
 					n_state = DHT_START;
 				end
@@ -399,6 +408,9 @@ module control_logic(
 					else begin
 						n_state = IDLE;
 					end
+				end
+				else if (~sw[1]) begin
+					n_state = SR04_WAIT;
 				end
 				else if (dht_done) begin
 					n_state = DHT_WAIT;
@@ -431,7 +443,8 @@ module control_logic(
 	assign dht11_start = (c_state == DHT_START) ? 1'b1 : 1'b0;
 
 	// fnddata_type_sel is signal to indicate which data is shown
-	assign fnddata_type_sel = {sw[3], sw[0]};
+	assign fnddata_type_sel[0] = (~sw[3] & sw[0]) | (sw[3] & sw[1]);
+	assign fnddata_type_sel[1] = sw[3];
 	// data_type_sel is signal to indicate which kind of data is shown
 	assign data_type_sel = {sw[3], sw[1]};
 endmodule
