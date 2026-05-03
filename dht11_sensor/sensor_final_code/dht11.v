@@ -1,0 +1,94 @@
+// dht11.v
+// 26.05.03 09:55 am
+
+`timescale 1ns / 1ps
+
+module dht11 (
+    input clk,
+    input rst,
+    input btn_R,
+    // sw30 is {sw[3], sw[0]}
+    // sw30 for fnd data select signal
+    input [1:0] sw30,
+
+    output [3:0] fnd_com,
+    output [7:0] fnd_data,
+    output valid,
+    output dht_done,
+
+    inout dht11
+);
+
+    wire w_tick_us, w_dht11_start;
+    wire [7:0] w_temperature, w_humidity;
+    wire [23:0] w_tem_hum_data;
+    wire [23:0] w_fnd_data;
+
+    // hardware test ------------------------
+    // ======================================
+    /*
+    ila_0 U_ILA_0 (
+        .clk(clk),
+        .probe0(w_dht11_start),
+        .probe1(w_humidity),
+        .probe2(w_temperature),
+        .probe3(U_DHT11_CNTL.c_state),
+        .probe4(U_DHT11_CNTL.dht11_sync2),
+        .probe5(U_DHT11_CNTL.bit_cnt_reg),
+        .probe6(U_DHT11_CNTL.data_reg)
+    );
+    */
+    // ======================================
+    
+    button_debounce U_BTN_DEBOUNCE (
+        .clk  (clk),
+        .rst  (rst),
+        .i_Btn(btn_R),
+        .o_Btn(w_dht11_start)
+    );
+
+    tick_gen_us U_TICK_GEN_US (
+        .clk    (clk),
+        .rst    (rst),
+        .tick_us(w_tick_us)
+    );
+
+    dht11_controller U_DHT11_CNTL (
+        .clk        (clk),
+        .rst        (rst),
+        .dht11_start(w_dht11_start),
+        .tick_us    (w_tick_us),
+        .humidity   (w_humidity),
+        .temperature(w_temperature),
+        .valid      (valid),
+        .dht_done   (dht_done),
+        .dht11      (dht11)
+    );
+
+    tem_hum_merge U_TEM_HUM_MERGE (
+        .hum_data    (w_humidity),
+        .tem_data    (w_temperature),
+        .tem_hum_data(w_tem_hum_data)
+    );
+
+    // ==========================================
+    // st - wt - ultra sound - temhum select mux
+    mux_4x1 U_MUX_4x1 (
+        .in0    (24'b0),                // stopwatch
+        .in1    (24'b0),                // watch
+        .in2    (24'b0),                // sr04
+        .in3    (w_tem_hum_data),       // dht11
+        .sel    (sw30),                 // sw[3], sw[0]
+        .out_mux(w_fnd_data)            // fnd_in
+    );
+    // ==========================================
+
+    fnd_controller U_FND_CNTL (
+        .clk     (clk),
+        .rst     (rst),
+        .fnd_in  (w_fnd_data),
+        .fnd_com (fnd_com),
+        .fnd_data(fnd_data)
+    );
+
+endmodule
