@@ -1,0 +1,144 @@
+`timescale 1ns / 1ps
+
+module tb_control_unit();
+
+	reg clk;
+	reg rst;
+	reg dht_done;
+	reg [3:0] sw;
+	reg btnU;
+	reg btnR;
+	reg btnD;
+	reg btnL;
+
+	wire run_stop;
+	wire clear;
+	wire mode;
+	wire set;
+	wire up;
+	wire down;
+	wire [2:0] place;
+	wire sr04_start;
+	wire tick_us;
+	wire dht11_start;
+	wire [1:0] data_type_sel;
+	wire [1:0] fnddata_type_sel;
+
+
+	control_unit dut(
+		.clk(clk),
+		.rst(rst),
+		.dht_done(dht_done),
+		.sw(sw),
+		.btnU(btnU),
+		.btnR(btnR),
+		.btnD(btnD),
+		.btnL(btnL),
+
+		.run_stop(run_stop),
+		.clear(clear),
+		.mode(mode),
+		.set(set),
+		.up(up),
+		.down(down),
+		.place(place),
+		.sr04_start(sr04_start),
+		.tick_us(tick_us),
+		.dht11_start(dht11_start),
+		.data_type_sel(data_type_sel),
+		.fnddata_type_sel(fnddata_type_sel)
+	);
+
+	always #5 clk = ~clk;
+	
+	initial begin
+		clk = 0;
+		rst = 1;
+		dht_done = 0;
+		sw = 4'b0000;
+		btnU = 0;
+		btnR = 0;
+		btnD = 0;
+		btnL = 0;
+
+		#20
+		rst = 0;
+		repeat (2) @(negedge clk);
+
+		// Stopwatch FSM Test
+		// Setting at stopwatch
+//		btnU = 1;
+//		#20;
+//		btnU = 0;
+//		repeat (10) @(posedge clk);
+		// Run Test
+		btnR = 1;
+		#11;
+		btnR = 0;
+		repeat (10) @(posedge clk);
+//		// Stop Test
+//		btnR = 1;
+//		#11;
+//		btnR = 0;
+//		repeat (10) @(posedge clk);
+//		// Clear Test
+//		btnL = 1;
+//		#11;
+//		btnL = 0;
+//		repeat (10) @(posedge clk);
+//		// Mode Test
+//		btnD = 1;
+//		#11;
+//		btnD = 0;
+//		repeat (10) @(posedge clk);
+
+		// Watch FSM Test
+		// Setting at watch
+		// Check that initial setting value is hour
+		sw = 4'b0111;
+		repeat (10) @(posedge clk);
+		// setting value change by input btnL or btnR
+		btnR = 1;
+		#11;
+		btnR = 0;
+		repeat (10) @(posedge clk);
+		btnL = 1;
+		#11;
+		btnL = 0;
+		repeat (10) @(posedge clk);
+
+		// Setting at sec
+		sw = 4'b0110;
+		repeat (10) @(posedge clk);
+
+
+//		// Sensor FSM Test
+//		// SR-04 Test
+//		sw = 4'b1000;
+//		repeat (1) @(posedge clk);
+//		btnR = 1;
+//		#11; // button input for 1 clk period
+//		btnR = 0;
+//
+//		repeat (7_000_000) @(negedge clk);
+
+//		// DHT11 Test
+//		sw = 4'b1010;
+//		repeat (1) @(posedge clk);
+//		btnR = 1;
+//		#11; // button input for 1 clk period
+//		btnR = 0;
+//		repeat (1_000) @(negedge clk);
+//		dht_done = 1;
+//		#11;
+//		dht_done = 0;
+
+		// IDLE State Transition Test
+		sw = 4'b0000;
+		repeat (10) @(negedge clk);
+		$stop();
+
+	end
+
+
+endmodule
