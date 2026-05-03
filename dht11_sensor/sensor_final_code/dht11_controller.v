@@ -27,25 +27,28 @@ module dht11_controller (
     reg dht11_reg, dht11_next;  // dht11 output drive
 
     // 40-bit data register
-    reg [39:0] data_reg, data_next;
+    reg [39:0] data_reg, data_next; 
+
+    // data decision 0 or 1
     reg data_decision_reg, data_decision_next;
 
     //dht11 output 3 state control
     assign dht11 = (out_sel_reg) ? dht11_reg : 1'bz;
     
-    // checksum 추가 필요 
     assign humidity = data_reg[39:32];
     assign temperature = data_reg[23:16];
 
     // dht11 synchronizer 
     reg dht11_sync1, dht11_sync2; // dht11 synchronizer 
 
-    // 8-bit * 4 -> 최대 10bit
+    // 8-bit * 4 = max 10-bit -> we use only 8-bit
     assign valid = (data_reg [7:0] == (data_reg[39:32] + data_reg[31:24] + data_reg[23:16] + data_reg [15:8])) ? 1 : 0;
-
+    
+    // we need control unit dht11_done signal
     reg dht_done_reg, dht_done_next; 
     assign dht_done = dht_done_reg;
     
+    // synchronizer for stable input
     always @(posedge clk, posedge rst) begin
         if (rst) begin
             dht11_sync1 <= 1'b1;
