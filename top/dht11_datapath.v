@@ -164,7 +164,7 @@ module dht11_controller (
                 // output is high impedance "z" -> input mode
                 out_sel_next = 1'b0; 
                 if (tick_us) begin
-                    if ((tick_cnt_reg > 40) && (dht11_sync2)) begin
+                    if ((tick_cnt_reg > 80) && (dht11_sync2)) begin
                         n_state = SYNCH;
                         tick_cnt_next = 0;
                     end
@@ -176,7 +176,7 @@ module dht11_controller (
 
             SYNCH: begin
                 if (tick_us) begin
-                    if ((tick_cnt_reg > 40) && (!dht11_sync2)) begin
+                    if ((tick_cnt_reg > 80) && (!dht11_sync2)) begin
                         n_state = DATA_SYNC;
                         tick_cnt_next = 0;
                     end
