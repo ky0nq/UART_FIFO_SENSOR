@@ -745,7 +745,7 @@ module sr04_controller (
 				tick_cnt_next = tick_cnt_reg + 1;
 				if (tick_cnt_reg == 58) begin
 					dist_next = dist_reg + 1;
-					tick_cnt_next = 0;
+					tick_cnt_next = 1;
 					if (dist_reg == 400) begin
 						dist_next = 400;
                         n_state = IDLE;
