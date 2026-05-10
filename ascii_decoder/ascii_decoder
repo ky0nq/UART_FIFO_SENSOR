@@ -1,170 +1,65 @@
-`timescale 1ns / 1ps
-module ascii_decoder_TOP (
+module ascii_decoder (
     input clk,
     input rst,
     input [7:0] d_ascii_data,
     input dec_start,
-    output btnU,  //8'h55  
-    output btnR,  //8'h52
-    output btnD,  //8'h44
-    output btnL,  //8'h4c
+    output ascii_dataU,  //8'h55  
+    output ascii_dataR,  //8'h52
+    output ascii_dataD,  //8'h44
+    output ascii_dataL,  //8'h4c
     output status  //8'h53 - s
 );
-       
-    wire w_o_btnU, w_o_btnR, w_o_btnD, w_o_btnL, w_o_status;
 
-    ascii_decoder_logic U_ASCII_DECODER (
-        .clk(clk),
-        .rst(rst),
-        .d_ascii_data(d_ascii_data),
-        .dec_start(dec_start),
+	// param for state
+	parameter IDLE = 0;
+	parameter DECODE = 1;
 
-        .btnU  (w_o_btnU),   //8'h55  
-        .btnR  (w_o_btnR),   //8'h52
-        .btnD  (w_o_btnD),   //8'h44
-        .btnL  (w_o_btnL),   //8'h4c
-        .status(w_o_status)  //8'h53 - s
-    );
+	reg c_state, n_state;
+	reg [7:0] d_ascii_data_reg, d_ascii_data_next;
 
-    rising_edge_detect U_BTN_U_RISING_EDGE_DETECT (
-        .clk  (clk),
-        .rst  (rst),
-        .i_btn(w_o_btnU),
-        .o_btn(btnU)
-    );
-    rising_edge_detect U_BTN_R_RISING_EDGE_DETECT (
-        .clk  (clk),
-        .rst  (rst),
-        .i_btn(w_o_btnR),
-        .o_btn(btnR)
-    );
-    rising_edge_detect U_BTN_D_RISING_EDGE_DETECT (
-        .clk  (clk),
-        .rst  (rst),
-        .i_btn(w_o_btnD),
-        .o_btn(btnD)
-    );
-    rising_edge_detect U_BTN_L_RISING_EDGE_DETECT (
-        .clk  (clk),
-        .rst  (rst),
-        .i_btn(w_o_btnL),
-        .o_btn(btnL)
-    );
-    rising_edge_detect U_BTN_S_RISING_EDGE_DETECT (
-        .clk  (clk),
-        .rst  (rst),
-        .i_btn(w_o_status),
-        .o_btn(status)
-    );
+	// wire
+	wire data_is_u, data_is_r, data_is_d, data_is_l, data_is_s;
 
-endmodule
+	assign data_is_u = (d_ascii_data_reg == 8'h75) | (d_ascii_data_reg == 8'h55);
+	assign data_is_r = (d_ascii_data_reg == 8'h72) | (d_ascii_data_reg == 8'h52);
+	assign data_is_d = (d_ascii_data_reg == 8'h64) | (d_ascii_data_reg == 8'h44);
+	assign data_is_l = (d_ascii_data_reg == 8'h6C) | (d_ascii_data_reg == 8'h4C);
+	assign data_is_s = (d_ascii_data_reg == 8'h73) | (d_ascii_data_reg == 8'h53);
 
-module ascii_decoder_logic (
-    input clk,
-    input rst,
-    input [7:0] d_ascii_data,
-    input dec_start,
+	always @(posedge clk or posedge rst) begin
+		if (rst) begin
+			c_state <= IDLE;
+			d_ascii_data_reg <= 0;
+		end
+		else begin
+			c_state <= n_state;
+			d_ascii_data_reg <= d_ascii_data_next;
+		end
+	end
 
-    output btnU,   //8'h55  
-    output btnR,   //8'h52
-    output btnD,   //8'h44
-    output btnL,   //8'h4c
-    output status  //8'h53 - s
+	always @(*) begin
+		n_state = c_state;
+		d_ascii_data_next = d_ascii_data_reg;
 
-);
-    reg btnU_reg, btnU_next;
-    reg btnR_reg, btnR_next;
-    reg btnD_reg, btnD_next;
-    reg btnL_reg, btnL_next;
-    reg status_reg, status_next;
+		case (c_state)
+			IDLE: begin
+				if (dec_start) begin
+					n_state = DECODE;
+					d_ascii_data_next = d_ascii_data;
+				end
+			end
+			DECODE: begin
+				n_state = IDLE;
+				d_ascii_data_next = 0;
+			end
+		endcase
+	end
 
-
-    assign btnU   = btnU_reg;
-    assign btnR   = btnR_reg;
-    assign btnD   = btnD_reg;
-    assign btnL   = btnL_reg;
-    assign status = status_reg;
-
-    always @(posedge clk, posedge rst) begin
-        if (rst) begin
-            btnU_reg   <= 0;
-            btnR_reg   <= 0;
-            btnD_reg   <= 0;
-            btnL_reg   <= 0;
-            status_reg <= 0;
-        end else begin
-            btnU_reg   <= btnU_next;
-            btnR_reg   <= btnR_next;
-            btnD_reg   <= btnD_next;
-            btnL_reg   <= btnL_next;
-            status_reg <= status_next;
-        end
-    end
-    always @(*) begin
-        btnU_next   = btnU_reg;
-        btnR_next   = btnR_reg;
-        btnD_next   = btnD_reg;
-        btnL_next   = btnL_reg;
-        status_next = status_reg;
-
-        case (d_ascii_data)
-            8'h55: btnU_next = dec_start & 1;   // U
-            8'h75: btnU_next = dec_start & 1;// u
-            8'h52: btnR_next = dec_start & 1;   // R
-            8'h72: btnR_next = dec_start & 1;// r
-            8'h44: btnD_next = dec_start & 1;   // D
-            8'h64: btnD_next = dec_start & 1;// d
-            8'h4C: btnL_next = dec_start & 1;   // L
-            8'h6C: btnL_next = dec_start & 1;// l
-            8'h53: status_next = dec_start & 1; // S
-            8'h72: status_next = dec_start & 1;// s
-            default: begin
-                btnU_next   = 0;
-                btnR_next   = 0;
-                btnD_next   = 0;
-                btnL_next   = 0;
-                status_next = 0;
-            end
-        endcase
-        
-    end
-endmodule
-//***************************************************************
-module rising_edge_detect (
-    input  clk,
-    input  rst,
-    input  i_btn,
-    output o_btn
-);
-
-    reg edge_reg;
-    reg [7:0] sync_reg, sync_next;
-    wire w_debounce;
-
-    always @(posedge clk, posedge rst) begin
-        if (rst) begin
-            sync_reg <= 0;
-        end else begin
-            sync_reg <= sync_next;
-        end
-    end
-
-    always @(*) begin
-        sync_next = {i_btn, sync_reg[7:1]};
-    end
-
-    assign w_debounce = &sync_reg;
-
-    // rising edge detect
-    always @(posedge clk, posedge rst) begin
-        if (rst) begin
-            edge_reg <= 1'b0;
-        end else begin
-            edge_reg <= w_debounce;
-        end
-    end
-
-    assign o_btn = w_debounce & (~edge_reg);
+	// output logic
+	assign ascii_dataU = ((c_state == DECODE) & data_is_u) ? 1'b1 : 1'b0;
+	assign ascii_dataR = ((c_state == DECODE) & data_is_r) ? 1'b1 : 1'b0;
+	assign ascii_dataD = ((c_state == DECODE) & data_is_d) ? 1'b1 : 1'b0;
+	assign ascii_dataL = ((c_state == DECODE) & data_is_l) ? 1'b1 : 1'b0;
+	assign status = ((c_state == DECODE) & data_is_s) ? 1'b1 : 1'b0;
 
 endmodule
-
