@@ -650,7 +650,7 @@ module ascii_decoder (
 	reg [7:0] d_ascii_data_reg, d_ascii_data_next;
 
 	// wire
-	wire [7:0] data_is_u, data_is_r, data_is_d, data_is_l;
+	wire data_is_u, data_is_r, data_is_d, data_is_l, data_is_s;
 
 	assign data_is_u = (d_ascii_data_reg == 8'h75) | (d_ascii_data_reg == 8'h55);
 	assign data_is_r = (d_ascii_data_reg == 8'h72) | (d_ascii_data_reg == 8'h52);
